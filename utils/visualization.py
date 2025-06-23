@@ -3,6 +3,7 @@
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 import numpy as np
+import plotly.express as px
 
 
 def plot_3d_scatter(
@@ -37,9 +38,26 @@ def plot_3d_scatter(
         marker_dict["size"] = 2  # default marker size
 
     if color_col is not None:
-        marker_dict["color"] = df[color_col]
+        # If color_col is categorical, use a bright qualitative colorscale
+        color_values = df[color_col]
+        if (
+            color_values.dtype == object
+            or str(color_values.dtype).startswith("category")
+            or len(color_values.unique()) < 10
+        ):
+            # Use Plotly's bright qualitative palette for categories
+            unique_vals = color_values.unique()
+            color_map = {
+                val: color
+                for val, color in zip(unique_vals, px.colors.qualitative.Bold)
+            }
+            marker_dict["color"] = color_values.map(color_map)
+            marker_dict["colorscale"] = None  # Disable continuous colorscale
+        else:
+            marker_dict["color"] = color_values
+            marker_dict["colorscale"] = "Viridis"
     else:
-        marker_dict["color"] = "blue"  # default marker color
+        marker_dict["color"] = "yellow"  # default marker color
 
     fig = go.Figure(
         data=[
@@ -84,3 +102,5 @@ def plot_3d_scatter(
     )
     # Show the plot
     fig.show()
+
+    return fig
